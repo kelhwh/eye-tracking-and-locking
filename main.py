@@ -43,14 +43,18 @@ with mp_face_mesh.FaceMesh(
             cv.circle(frame, mesh_points[RIGHT_PUPIL], radius=1, color=(0, 0, 255), thickness=-1)
 
             text = f"Left pupil: {mesh_points[LEFT_PUPIL]} \nRight pupil: {mesh_points[RIGHT_PUPIL]}"
-            add_text(
-                frame,
-                text,
-                org=(int(img_w*0.05), int(img_h*0.1)),
-                font=cv.FONT_HERSHEY_COMPLEX,
-                font_scale=0.5,
-                color=(0,255,0)
-            )
+
+        else:
+            text = f"Left pupil: Not detected \nRight pupil: Not detected"
+
+        add_text(
+            frame,
+            text,
+            org=(int(img_w*0.05), int(img_h*0.1)),
+            font=cv.FONT_HERSHEY_COMPLEX,
+            font_scale=0.5,
+            color=(0,255,0)
+        )
 
         cv.imshow('img', frame)
         key = cv.waitKey(1)
