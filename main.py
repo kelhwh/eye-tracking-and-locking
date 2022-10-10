@@ -39,26 +39,37 @@ with mp_face_mesh.FaceMesh(
             # mesh_points = np.array([np.multiply([p.x, p.y], [img_w, img_h]).astype(int) for p in landmark])
             mesh_points = np.array([[int(p.x * img_w),int(p.y * img_h)] for p in landmark])
 
-            cv.circle(frame, mesh_points[LEFT_PUPIL], np.linalg.norm(mesh_points[LEFT_PUPIL] - mesh_points[LEFT_IRIS][0]).astype(int), (255, 0, 0), thickness=1, lineType=cv.LINE_AA)
-            cv.circle(frame, mesh_points[LEFT_PUPIL], radius=1, color=(255, , 0), thickness=-1)
-            cv.circle(frame, mesh_points[RIGHT_PUPIL], np.linalg.norm(mesh_points[RIGHT_PUPIL] - mesh_points[RIGHT_IRIS][0]).astype(int), (255, 0, 0), thickness=1, lineType=cv.LINE_AA)
-            cv.circle(frame, mesh_points[RIGHT_PUPIL], radius=1, color=(255, 0, 0), thickness=-1)
+            cv.circle(frame, mesh_points[LEFT_PUPIL], np.linalg.norm(mesh_points[LEFT_PUPIL] - mesh_points[LEFT_IRIS][0]).astype(int), (255, 0, 255), thickness=1, lineType=cv.LINE_AA)
+            cv.circle(frame, mesh_points[LEFT_PUPIL], radius=1, color=(255, 0, 255), thickness=-1)
+            cv.circle(frame, mesh_points[RIGHT_PUPIL], np.linalg.norm(mesh_points[RIGHT_PUPIL] - mesh_points[RIGHT_IRIS][0]).astype(int), (255, 0, 255), thickness=1, lineType=cv.LINE_AA)
+            cv.circle(frame, mesh_points[RIGHT_PUPIL], radius=1, color=(255, 0, 255), thickness=-1)
 
-            text = f"Left eye: {mesh_points[LEFT_PUPIL]} \nRight eye: {mesh_points[RIGHT_PUPIL]}"
+            text_detect = f"[Detection]\nLeft eye: {mesh_points[LEFT_PUPIL]} \nRight eye: {mesh_points[RIGHT_PUPIL]}"
 
         else:
-            text = f"Left eye: Not detected \nRight eye: Not detected"
+            text_detect = f"[Detection]\nLeft eye: Not detected\nRight eye: Not detected"
 
         if 'lock_left_pupil' in globals():
             cv.circle(frame, lock_left_pupil, lock_left_diameter, (0, 255, 0), thickness=1, lineType=cv.LINE_AA)
             cv.circle(frame, lock_left_pupil, radius=1, color=(0, 255, 0), thickness=-1)
 
-            
+            text_lock = f"[Lock]\nLeft eye: Locked {lock_left_pupil}  Deviation: {np.linalg.norm(mesh_points[LEFT_PUPIL] - lock_left_pupil).round(1)}"
+
+        else:
+            text_lock = f"\n Left eye: Not locked  Deviation: Not locked"
 
         add_text(
             frame,
-            text,
+            text_detect,
             org=(int(img_w*0.05), int(img_h*0.1)),
+            font=cv.FONT_HERSHEY_COMPLEX,
+            font_scale=0.5,
+            color=(0,255,0)
+        )
+        add_text(
+            frame,
+            text_lock,
+            org=(int(img_w*0.3), int(img_h*0.1)),
             font=cv.FONT_HERSHEY_COMPLEX,
             font_scale=0.5,
             color=(0,255,0)
