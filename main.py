@@ -4,13 +4,15 @@ import mediapipe as mp
 import json
 from util import add_text
 
-with open('landmarks.json') as file:
+with open('config/landmarks.json') as file:
     landmarks = json.load(file)
 
 LEFT_IRIS = landmarks['iris']['left']
 LEFT_PUPIL = landmarks['pupil']['left']
 RIGHT_IRIS = landmarks['iris']['right']
 RIGHT_PUPIL = landmarks['pupil']['right']
+
+LOCK_SIZE = 2
 
 mp_face_mesh = mp.solutions.face_mesh
 
@@ -37,15 +39,21 @@ with mp_face_mesh.FaceMesh(
             # mesh_points = np.array([np.multiply([p.x, p.y], [img_w, img_h]).astype(int) for p in landmark])
             mesh_points = np.array([[int(p.x * img_w),int(p.y * img_h)] for p in landmark])
 
-            cv.circle(frame, mesh_points[LEFT_PUPIL], np.linalg.norm(mesh_points[LEFT_PUPIL] - mesh_points[LEFT_IRIS][0]).astype(int), (0, 0, 255), thickness=1, lineType=cv.LINE_AA)
-            cv.circle(frame, mesh_points[LEFT_PUPIL], radius=1, color=(0, 0, 255), thickness=-1)
-            cv.circle(frame, mesh_points[RIGHT_PUPIL], np.linalg.norm(mesh_points[RIGHT_PUPIL] - mesh_points[RIGHT_IRIS][0]).astype(int), (0, 0, 255), thickness=1, lineType=cv.LINE_AA)
-            cv.circle(frame, mesh_points[RIGHT_PUPIL], radius=1, color=(0, 0, 255), thickness=-1)
+            cv.circle(frame, mesh_points[LEFT_PUPIL], np.linalg.norm(mesh_points[LEFT_PUPIL] - mesh_points[LEFT_IRIS][0]).astype(int), (255, 0, 0), thickness=1, lineType=cv.LINE_AA)
+            cv.circle(frame, mesh_points[LEFT_PUPIL], radius=1, color=(255, , 0), thickness=-1)
+            cv.circle(frame, mesh_points[RIGHT_PUPIL], np.linalg.norm(mesh_points[RIGHT_PUPIL] - mesh_points[RIGHT_IRIS][0]).astype(int), (255, 0, 0), thickness=1, lineType=cv.LINE_AA)
+            cv.circle(frame, mesh_points[RIGHT_PUPIL], radius=1, color=(255, 0, 0), thickness=-1)
 
-            text = f"Left pupil: {mesh_points[LEFT_PUPIL]} \nRight pupil: {mesh_points[RIGHT_PUPIL]}"
+            text = f"Left eye: {mesh_points[LEFT_PUPIL]} \nRight eye: {mesh_points[RIGHT_PUPIL]}"
 
         else:
-            text = f"Left pupil: Not detected \nRight pupil: Not detected"
+            text = f"Left eye: Not detected \nRight eye: Not detected"
+
+        if 'lock_left_pupil' in globals():
+            cv.circle(frame, lock_left_pupil, lock_left_diameter, (0, 255, 0), thickness=1, lineType=cv.LINE_AA)
+            cv.circle(frame, lock_left_pupil, radius=1, color=(0, 255, 0), thickness=-1)
+
+            
 
         add_text(
             frame,
@@ -60,6 +68,11 @@ with mp_face_mesh.FaceMesh(
         key = cv.waitKey(1)
         if key == ord('q'):
             break
+        elif key == ord('l'):
+            if faces.multi_face_landmarks:
+                lock_left_pupil = mesh_points[LEFT_PUPIL]
+                lock_left_diameter = int(np.linalg.norm(mesh_points[LEFT_PUPIL] - mesh_points[LEFT_IRIS][0]) * LOCK_SIZE)
+
 
 cap.release()
 cv.destroyAllWindows()
