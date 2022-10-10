@@ -12,7 +12,7 @@ LEFT_PUPIL = landmarks['pupil']['left']
 RIGHT_IRIS = landmarks['iris']['right']
 RIGHT_PUPIL = landmarks['pupil']['right']
 
-LOCK_SIZE = 2
+LOCK_SIZE = 0.5
 
 mp_face_mesh = mp.solutions.face_mesh
 
@@ -48,12 +48,22 @@ with mp_face_mesh.FaceMesh(
 
         else:
             text_detect = f"[Detection]\nLeft eye: Not detected\nRight eye: Not detected"
+            lock_color = (0,255,0)
 
         if 'lock_left_pupil' in globals():
-            cv.circle(frame, lock_left_pupil, lock_left_diameter, (0, 255, 0), thickness=1, lineType=cv.LINE_AA)
-            cv.circle(frame, lock_left_pupil, radius=1, color=(0, 255, 0), thickness=-1)
+            deviation_left = np.linalg.norm(mesh_points[LEFT_PUPIL] - lock_left_pupil).round(1)
+            is_deviated_left = deviation_left > lock_left_diameter
 
-            text_lock = f"[Lock]\nLeft eye: Locked {lock_left_pupil}  Deviation: {np.linalg.norm(mesh_points[LEFT_PUPIL] - lock_left_pupil).round(1)}"
+            text_lock = f"[Lock]\nLeft eye: Locked {lock_left_pupil}  Deviation: {deviation_left}"
+            lock_color = (0,255,0)
+
+            if is_deviated_left:
+                text_lock += "\nWARNING"
+                lock_color = (0,0,255)
+            cv.circle(frame, lock_left_pupil, lock_left_diameter, lock_color, thickness=1, lineType=cv.LINE_AA)
+            cv.circle(frame, lock_left_pupil, radius=1, color=lock_color, thickness=-1)
+
+
 
         else:
             text_lock = f"\n Left eye: Not locked  Deviation: Not locked"
@@ -72,7 +82,7 @@ with mp_face_mesh.FaceMesh(
             org=(int(img_w*0.3), int(img_h*0.1)),
             font=cv.FONT_HERSHEY_COMPLEX,
             font_scale=0.5,
-            color=(0,255,0)
+            color=lock_color
         )
 
         cv.imshow('img', frame)
@@ -83,6 +93,12 @@ with mp_face_mesh.FaceMesh(
             if faces.multi_face_landmarks:
                 lock_left_pupil = mesh_points[LEFT_PUPIL]
                 lock_left_diameter = int(np.linalg.norm(mesh_points[LEFT_PUPIL] - mesh_points[LEFT_IRIS][0]) * LOCK_SIZE)
+        elif key == 12:
+            try:
+                del lock_left_pupil
+                del lock_left_diameter
+            except:
+                continue
 
 
 cap.release()
