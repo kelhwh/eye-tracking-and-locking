@@ -50,7 +50,7 @@ with mp_face_mesh.FaceMesh(
 
         else:
             text_detect = f"[Detection]\nLeft eye: Not detected\nRight eye: Not detected"
-            lock_color = (0,255,0)
+
 
         #Draw locking range and create locking status
         if 'lock_left_pupil' in globals():
@@ -68,6 +68,7 @@ with mp_face_mesh.FaceMesh(
 
         else:
             text_lock = f"\n Left eye: Not locked  Deviation: Not locked"
+            lock_color = (0,255,0)
 
         #Show text for status
         add_text(
