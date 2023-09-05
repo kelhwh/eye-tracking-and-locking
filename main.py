@@ -98,7 +98,13 @@ with mp_face_mesh.FaceMesh(
             t=round(time.time() - t_start,2)
             time_record = np.append(time_record, t)
             deviation_record = np.append(deviation_record, deviation_left)
-
+            plt.xlim(max(0,t-10),t)
+            plt.ylim(0,50)
+            # plt.axhline(y = lock_left_diameter, color = 'r', linestyle = '-', label='Threshold')
+            plt.plot(time_record, deviation_record, c='black')
+            #plt.legend()
+            plt.draw()
+            print(t)
 
         #Reading keyboard input
         key = cv.waitKey(1)
