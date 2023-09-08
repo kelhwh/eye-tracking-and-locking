@@ -21,17 +21,24 @@ class Detector():
             min_tracking_confidence=0.9
         )
 
+        self.pupil_left = None
+        self.pupil_right = None
+        self.iris_left = None
+        self.iris_right = None
+        self.pupil_diameter = None
+        self.deviation_left = None
+        self.is_deviated_left = None
 
-    def label(self, frame, lock_status, lock_point, lock_diameter):
+    def detect(self, frame):
         img_h, img_w = frame.shape[:2]
         faces = self.face_mesh.process(frame)
 
         key_landmarks = None
         diameter = None
         #If face detected in the frame
-        face_detected = True if faces.multi_face_landmarks else False
+        self.face_detected = True if faces.multi_face_landmarks else False
 
-        if face_detected:
+        if self.face_detected:
             landmark = faces.multi_face_landmarks[0].landmark
             # mesh_points = np.array([np.multiply([p.x, p.y], [img_w, img_h]).astype(int) for p in landmark])
             mesh_points = np.array([[int(p.x * img_w),int(p.y * img_h)] for p in landmark])
@@ -40,13 +47,17 @@ class Detector():
             self.iris_left = mesh_points[self.landmark_map['iris']['left']]
             self.iris_right = mesh_points[self.landmark_map['iris']['right']]
 
-            key_landmarks = [self.pupil_left, self.pupil_right]
-            diameter = np.linalg.norm(self.pupil_left - self.iris_left[0]).astype(int)
+            self.pupil_diameter = np.linalg.norm(self.pupil_left - self.iris_left[0]).astype(int)
 
+
+    def label(self, frame, lock_status, lock_point, lock_diameter):
+        img_h, img_w = frame.shape[:2]
+
+        if self.face_detected:
             #Draw both irises and pupil and create detection status text
-            cv.circle(frame, self.pupil_left, diameter, (255, 0, 255), thickness=1, lineType=cv.LINE_AA)
+            cv.circle(frame, self.pupil_left, self.pupil_diameter, (255, 0, 255), thickness=1, lineType=cv.LINE_AA)
             cv.circle(frame, self.pupil_left, radius=1, color=(255, 0, 255), thickness=-1)
-            cv.circle(frame, self.pupil_right, diameter, (255, 0, 255), thickness=1, lineType=cv.LINE_AA)
+            cv.circle(frame, self.pupil_right, self.pupil_diameter, (255, 0, 255), thickness=1, lineType=cv.LINE_AA)
             cv.circle(frame, self.pupil_right, radius=1, color=(255, 0, 255), thickness=-1)
 
             text_detect = f"[Detection]\nLeft eye: {self.pupil_left} \nRight eye: {self.pupil_right}"
@@ -61,13 +72,13 @@ class Detector():
             text_lock = f"[Lock]\nLeft eye: Locked {lock_left_pupil}"
             lock_color = (0,255,0)
 
-            if face_detected:
-                deviation_left = np.linalg.norm(self.pupil_left - lock_left_pupil).round(1)
-                is_deviated_left = deviation_left > lock_left_diameter
+            if self.face_detected:
+                self.deviation_left = np.linalg.norm(self.pupil_left - lock_left_pupil).round(1)
+                self.is_deviated_left = self.deviation_left > lock_left_diameter
 
-                text_lock += f"  Deviation: {deviation_left}"
+                text_lock += f"  Deviation: {self.deviation_left}"
 
-                if is_deviated_left:
+                if self.is_deviated_left:
                     text_lock += "\nWARNING"
                     lock_color = (255,0,0)
 
@@ -100,4 +111,4 @@ class Detector():
             color=lock_color
         )
 
-        return frame, face_detected, key_landmarks, diameter
+        return frame
