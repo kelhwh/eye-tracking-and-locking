@@ -21,7 +21,6 @@ class EyeTrackingApp(QMainWindow):
         self.lock_start_time = None
         self.deviation_record = None
         self.time_record = None
-        self.face_detected = False
 
         self.pause_status = False
 
@@ -92,26 +91,25 @@ class EyeTrackingApp(QMainWindow):
         if ret and not self.pause_status:
             Image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             FlippedImage = cv2.flip(Image, 1)
-            FlippedImage, face_detected, key_landmarks, diameter = self.detector.label(FlippedImage, self.lock_status, self.lock_point, self.lock_diameter)
+
+            self.detector.detect(FlippedImage)
+            FlippedImage = self.detector.label(FlippedImage, self.lock_status, self.lock_point, self.lock_diameter)
+
+
             ConvertToQtFormat = QImage(FlippedImage.data, FlippedImage.shape[1], FlippedImage.shape[0], QImage.Format_RGB888)
             Pic = ConvertToQtFormat.scaled(960, 640, Qt.KeepAspectRatio)
             pixmap = QPixmap.fromImage(Pic)
             self.video_label.setPixmap(pixmap)
 
-            self.face_detected = face_detected
-            self.current_point = key_landmarks[0] if face_detected else None # Left pupil point
-            self.current_diameter = diameter
+            self.current_point = self.detector.pupil_left if self.detector.face_detected else None # Left pupil point
+            self.current_diameter = self.detector.pupil_diameter
 
 
             if self.lock_status:
                 t = round(time.time() - self.lock_start_time,2)
 
-                if self.face_detected:
-                    deviation_left = np.linalg.norm(self.current_point - self.lock_point).round(1)
-                else:
-                    deviation_left = None
                 self.time_record = np.append(self.time_record, t)
-                self.deviation_record = np.append(self.deviation_record, deviation_left)
+                self.deviation_record = np.append(self.deviation_record, self.detector.deviation_left)
 
                 self.plot_deviation(self.time_record, self.deviation_record)
 
@@ -127,7 +125,7 @@ class EyeTrackingApp(QMainWindow):
         self.plot_canvas.draw()
 
     def lock(self, size=100):
-        if self.face_detected:
+        if self.detector.face_detected:
             self.lock_start_time = time.time()
             self.lock_status = True
             self.lock_point = self.current_point # Left pupil point
